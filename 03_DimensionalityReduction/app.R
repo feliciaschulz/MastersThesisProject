@@ -1,1 +1,187 @@
-library(shiny)library(plotly)library(bslib)library(Rtsne)library(umap)    set.seed(20) # make sure its always the same# Define UI ----ui <- page_fluid(  titlePanel("Cell visualisation app"),  sidebarLayout(    sidebarPanel(      selectInput(        "method",        "Select dimensionality reduction method",        choices = list("t-SNE", "UMAP"),        selected = 1      ),      checkboxGroupInput(        inputId = "celltype",        label = "Select all cell types that should be included",        choices=list("Mixed", "Myocytes", "Other", "Lymphatic vessel", "Extracellular matrix", "T-cells",                     "T-cells CD4+ (helper)", "T-cells mixed", "Epithelial cells", "T-cells Naive"  ),        selected = 1      ),      actionButton(inputId="submit_button", label="Run"),      width = 2    ),    mainPanel(              plotlyOutput("plot"),         textOutput("vector"),        plotlyOutput("scatterplot"),         textOutput("more_text"),        imageOutput("coloured_img")                  )      ))# Define server logic ----server <- function(input, output, session) {  data_avg <- eventReactive(input$submit_button, {    celltype_choices = input$celltype    averages["Area"] = area_data    averages_df <- averages[celltypes$InferredCellType %in% celltype_choices, ]    return(averages_df)  })    data_ct <- eventReactive(input$submit_button, {    celltype_choices = input$celltype    celltypes_df <- celltypes[celltypes$InferredCellType %in% celltype_choices, ]    return(celltypes_df)  })      compute <- eventReactive(input$submit_button, {    method = input$method    set.seed(20)    if (method=="t-SNE") {      tsne_out <- Rtsne(data_avg(),                    pca=TRUE,                    perplexity=30,                    k=2,                    max_iter=500,                    epoch=100)      Y <- as.data.frame(tsne_out$Y)      df <- data.frame(col1=Y$V1, col2=Y$V2)    } else { #method==UMAP      umap_out <- umap(data_avg())      df <- data.frame(col1=umap_out$layout[,1], col2=umap_out$layout[,2])    }    return(df)  })    hover_text <- eventReactive(input$submit_button, {    paste("Cell number:", 1:nrow(data_avg()),"<br>", "Cell size:", data_avg()$Area,"<br>", "<br>", "Actin:         ", data_avg()$actin, "<br>",                         "cd3:            ", data_avg()$cd3, "<br>", "cd4:            ", data_avg()$cd4, "<br>", "cd45:          ", data_avg()$cd45, "<br>",                         "cd45ro:      ", data_avg()$cd45ro, "<br>", "Collagen1:  ", data_avg()$collageni, "<br>", "Cytokeratin:", data_avg()$cytokeratin, "<br>",                         "Fibulin2:     ", data_avg()$fibulin2, "<br>", "Podoplanin:", data_avg()$podoplanin, "<br>",                        "Lyve1:        ", data_avg()$lyve1, "<br>")  })      # output$vector <- renderText({  #   paste("There are", nrow(compute()), "cells in your selection.\n You have used the",   #         input$method, "method.")  # })  #     output$plot <- renderPlotly({    p <- plot_ly(data = compute(), x = ~col1, y = ~col2, color = ~data_ct()$InferredCellType, colors = "Spectral", type = "scatter",             mode = "markers", text=hover_text()) %>%      layout(        xaxis = list(title = paste(input$method, "- 1")),        yaxis = list(title = paste(input$method, "- 2")),        title = paste(input$method, " for R1B1ROI1 with nuclei and cyto segmentation"),        showlegend = TRUE             )    event_register(p, "plotly_hover")  })    output$scatterplot <- renderPlotly({    geo$colour = "nohover"    plot_ly(geo, x = ~Cell.Center.X, y = ~Cell.Center.Y, type = "scatter", color = ~colour, colors = c("grey"), mode = "markers", marker = list(color = "grey", size = 2)) %>%      layout(title = "Original image")  })       observeEvent(event_data("plotly_hover"), {    hover_info <- event_data("plotly_hover")    x <- round(hover_info$x, 2)    y <- round(hover_info$y, 2)    row_to_check <- c(x, y)        data_rounded <- round(compute(), 2) # getting the data from here    tolerance <- 1e-6 # Defining a tolerance for imperfect matches    row_index <- which(apply(data_rounded, 1, function(row) all(abs(row - row_to_check) < tolerance))) # Check if any row matches within tolerance    # getting the row index of my geographical coordinate data frame to find the hover cell coord ^^^^^        if (length(row_index) == 1) {      row_index = row_index    } else if (length(row_index ) > 1) {      row_index = row_index[1]    }  else {      row_index = 0    }            if (!is.null(row_index)) {      x_coord <- geo[row_index, "Cell.Center.X"] # geo has my coordinates      y_coord <- geo[row_index, "Cell.Center.Y"]                  # output$more_text <- renderText({      #   if (!is.null(row_index)) {      #     paste("X:", x, ", Y:", y, row_index, geo[row_index, "Cell.Center.X"], geo[row_index, "Cell.Center.Y"])      #   } else {      #     "No hover data"      #   }      # })            geo$colour <- "lightgrey"      geo$colour[row_index] <- "black"            geo$pointsize <- 2      geo$pointsize[row_index] <- 7            plotlyProxy("scatterplot", session) %>%        plotlyProxyInvoke("restyle", list(marker  = list(color = geo$colour, size = geo$pointsize)))    }      })    }shinyApp(ui = ui, server = server)# # Render the image and draw a point at the extracted coordinates# output$geoPlot <- renderPlot({#   # Render the image#   img <- readJPEG("C-000_S-000_S_DAPI_R-01_W-B-1_ROI-01_A-DAPI.jpg")#   rasterImage(img, 0, 0, 1, 1)#   #   # Draw the point on the image#   points(x_coord, y_coord, col = "red", pch = 16)# }, res = 96, width = 800, height = 600)
+library(shiny)
+library(plotly)
+library(bslib)
+library(Rtsne)
+library(umap)
+
+    
+set.seed(20) # make sure its always the same
+
+
+# Define UI ----
+ui <- page_fluid(
+  titlePanel("Cell visualisation app"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput(
+        "method",
+        "Select dimensionality reduction method",
+        choices = list("t-SNE", "UMAP"),
+        selected = 1
+      ),
+      checkboxGroupInput(
+        inputId = "celltype",
+        label = "Select all cell types that should be included",
+        choices=list("Mixed", "Myocytes", "Other", "Lymphatic vessel", "Extracellular matrix", "T-cells Memory",
+                     "T-cells CD4+ (helper)", "T-cells Mixed", "Epithelial cells", "T-cells Naive", "B-cells Plasma"),
+        selected = 1
+      ),
+      actionButton(inputId="submit_button", label="Run"),
+      width = 2
+    ),
+    mainPanel(
+      
+        plotlyOutput("plot"), 
+        textOutput("vector"),
+        plotlyOutput("scatterplot")#, 
+        #textOutput("more_text"),
+        #imageOutput("coloured_img")
+        
+      
+    )
+    
+  )
+)
+
+
+
+
+# Define server logic ----
+server <- function(input, output, session) {
+  data_avg <- eventReactive(input$submit_button, {
+    celltype_choices = input$celltype
+    #averages["Area"] = area_data
+    averages_df <- averages[celltypes$InferredCellType %in% celltype_choices, ]
+    return(averages_df)
+  })
+  
+  data_ct <- eventReactive(input$submit_button, {
+    celltype_choices = input$celltype
+    celltypes_df <- celltypes[celltypes$InferredCellType %in% celltype_choices, ]
+    return(celltypes_df)
+  })
+  
+  
+  compute <- eventReactive(input$submit_button, {
+    method = input$method
+    set.seed(20)
+    if (method=="t-SNE") {
+      tsne_out <- Rtsne(data_avg(),
+                    pca=TRUE,
+                    perplexity=30,
+                    k=2,
+                    max_iter=500,
+                    epoch=100)
+      Y <- as.data.frame(tsne_out$Y)
+      df <- data.frame(col1=Y$V1, col2=Y$V2)
+
+    } else { #method==UMAP
+      umap_out <- umap(data_avg())
+      df <- data.frame(col1=umap_out$layout[,1], col2=umap_out$layout[,2])
+    }
+    return(df)
+  })
+  
+  hover_text <- eventReactive(input$submit_button, {
+    paste("Cell number:", 1:nrow(data_avg()),"<br>", "Cell size:", data_avg()$Area,"<br>", "<br>", "Actin:         ", data_avg()$actin, "<br>", 
+                        "cd3:            ", data_avg()$cd3, "<br>", "cd4:            ", data_avg()$cd4, "<br>", "cd45:          ", data_avg()$cd45, "<br>", 
+                        "cd45ro:      ", data_avg()$cd45ro, "<br>", "Collagen1:  ", data_avg()$collageni, "<br>", "Cytokeratin:", data_avg()$cytokeratin, "<br>", 
+                        "Fibulin2:     ", data_avg()$fibulin2, "<br>", "Podoplanin:", data_avg()$podoplanin, "<br>",
+                        "Lyve1:        ", data_avg()$lyve1, "<br>")
+  })
+  
+
+  
+  # output$vector <- renderText({
+  #   paste("There are", nrow(compute()), "cells in your selection.\n You have used the", 
+  #         input$method, "method.")
+  # })
+  # 
+  
+
+  output$plot <- renderPlotly({
+    p <- plot_ly(data = compute(), x = ~col1, y = ~col2, color = ~data_ct()$InferredCellType, colors = "Spectral", type = "scatter", 
+            mode = "markers", text=hover_text()) %>%
+      layout(
+        xaxis = list(title = paste(input$method, "- 1")),
+        yaxis = list(title = paste(input$method, "- 2")),
+        title = paste(input$method, " for R1B1ROI1 with nuclei and cyto segmentation"),
+        showlegend = TRUE 
+      
+      )
+    event_register(p, "plotly_hover")
+  })
+  
+  output$scatterplot <- renderPlotly({
+    geo$colour = "nohover"
+    plot_ly(geo, x = ~Cell.Center.X, y = ~Cell.Center.Y, type = "scatter", color = ~colour, colors = c("grey"), mode = "markers", marker = list(color = "grey", size = 2)) %>%
+      layout(title = "Original image")
+  })
+  
+  
+ 
+  observeEvent(event_data("plotly_hover"), {
+    hover_info <- event_data("plotly_hover")
+    x <- round(hover_info$x, 2)
+    y <- round(hover_info$y, 2)
+    row_to_check <- c(x, y)
+    
+    data_rounded <- round(compute(), 2) # getting the data from here
+    tolerance <- 1e-6 # Defining a tolerance for imperfect matches
+    row_index <- which(apply(data_rounded, 1, function(row) all(abs(row - row_to_check) < tolerance))) # Check if any row matches within tolerance
+    # getting the row index of my geographical coordinate data frame to find the hover cell coord ^^^^^
+    
+    if (length(row_index) == 1) {
+      row_index = row_index
+    } else if (length(row_index ) > 1) {
+      row_index = row_index[1]
+    }  else {
+      row_index = 0
+    }
+    
+    
+    if (!is.null(row_index)) {
+      x_coord <- geo[row_index, "Cell.Center.X"] # geo has my coordinates
+      y_coord <- geo[row_index, "Cell.Center.Y"]
+      
+      
+      # output$more_text <- renderText({
+      #   if (!is.null(row_index)) {
+      #     paste("X:", x, ", Y:", y, row_index, geo[row_index, "Cell.Center.X"], geo[row_index, "Cell.Center.Y"])
+      #   } else {
+      #     "No hover data"
+      #   }
+      # })
+      
+      geo$colour <- "lightgrey"
+      geo$colour[row_index] <- "black"
+      
+      geo$pointsize <- 2
+      geo$pointsize[row_index] <- 7
+      
+      plotlyProxy("scatterplot", session) %>%
+        plotlyProxyInvoke("restyle", list(marker  = list(color = geo$colour, size = geo$pointsize)))
+    }
+    
+  })
+  
+
+
+  
+}
+
+
+shinyApp(ui = ui, server = server)
+
+
+# # Render the image and draw a point at the extracted coordinates
+# output$geoPlot <- renderPlot({
+#   # Render the image
+#   img <- readJPEG("C-000_S-000_S_DAPI_R-01_W-B-1_ROI-01_A-DAPI.jpg")
+#   rasterImage(img, 0, 0, 1, 1)
+#   
+#   # Draw the point on the image
+#   points(x_coord, y_coord, col = "red", pch = 16)
+# }, res = 96, width = 800, height = 600)
+
+
