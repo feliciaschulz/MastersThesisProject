@@ -12,7 +12,7 @@ create_data <- function(markers = c("actin", "betatubulin3", "cd138", "cd248", "
                   "fibulin2", "hladrdpdq", "ki67", "lyve1", "pdgfra", "podoplanin")
   
   print(paste("You are computing dimensionality reduction methods for the markers",
-              list(markers), "and NOT for the markers", setdiff(markers, all_markers)))
+              list(markers)))
   
   ############################
   #### Intensity averages ####
@@ -26,9 +26,6 @@ create_data <- function(markers = c("actin", "betatubulin3", "cd138", "cd248", "
     
     file_name <- paste0("../00_Data/IntensityDataFrames/", rel_path, "/", marker, "df.csv")  # Construct the file name
     df <- read.csv(file_name) # Read the CSV file and save to df
-    print("df for marker:")
-    print(marker)
-    print(head(df))
     if (marker == markers[1]) {
       averages = data.frame(Cells = df$X) # Initialise averages df with the first marker
     }
@@ -37,7 +34,6 @@ create_data <- function(markers = c("actin", "betatubulin3", "cd138", "cd248", "
   }
   averages$Cells =  NULL # Remove cells column
 
-  print("First step done")
   ####################
   #### Cell types ####
   ####################
@@ -50,11 +46,9 @@ create_data <- function(markers = c("actin", "betatubulin3", "cd138", "cd248", "
   colnames(celltypes) <- colnames(averages)
   celltypes["InferredCellType"] = NA
   
-  print("trying to find thresholds data")
   # Get thresholds as created in MACSiQ View with intensity histogram settings
   thresholds = read.csv(paste0("../00_Data/Thresholds/", rel_path, "_Thresholds.csv"))
   thresholds_clean <- subset(thresholds, !grepl("DAPI", Name) & !grepl("background", Name) & !grepl("AF ", Name)) # remove DAPIs, bleached images and autofluorescence
-  print("found thresholds data")
   
   # Change threshold marker names so that I can loop through the thresholds easily
   for (i in seq_len(nrow(thresholds_clean))) {
@@ -71,9 +65,6 @@ create_data <- function(markers = c("actin", "betatubulin3", "cd138", "cd248", "
   rownames(thresholds_clean) <- thresholds_clean[,1]
   thresholds_clean[,1] <- NULL
   
-  print("thresholds have been fixed")
-  print("triyng to find marker celltypes")
-  
   # Import ground truth phenotypes depending on marker combinations, binary df
   # OBS: this df has the celltypes in [,1] because there are duplicate names so they cannot be made row names
   edited_marker_celltypes <- read.csv(marker_celltypes_data, sep=";", header=TRUE)  
@@ -84,9 +75,8 @@ create_data <- function(markers = c("actin", "betatubulin3", "cd138", "cd248", "
   edited_marker_celltypes[missing_columns] <- 0 # Add missing columns to edited_marker_celltypes with all values set to zero
   edited_marker_celltypes <- edited_marker_celltypes[, names(averages)] # Reorder columns to match averages dataframe
   edited_marker_celltypes <- cbind(X = row_names, edited_marker_celltypes)
+
   
-  print("marker celtypes found")
-  print("assigning celltypes")
   ### FIRST LOOP THAT TAKES LONG
   # Assign binary marker expression values to celltypes data
   # OBS: averages df marker names must match thresholds marker names, otherwise error in TRUE/FALSE comparison
@@ -140,19 +130,19 @@ create_data <- function(markers = c("actin", "betatubulin3", "cd138", "cd248", "
 # "actin", "betatubulin3", "cd138", "cd248", "cd279", "cd3", "cd34", "cd38", "cd4",
 # "cd44", "cd45", "cd45ro", "cd79a", "collageni", "cytokeratin", "dapi",
 # "fibulin2", "hladrdpdq", "ki67", "lyve1", "pdgfra", "podoplanin"
-
+my_img = "R1C1ROI1"
 datalist <- create_data(markers = c("actin", "cd3", "cd4",
                                 "cd45", "cd45ro", "collageni", "cytokeratin",
                                 "fibulin2", "lyve1", "podoplanin", "cd38", "cd138"),
                     thresholds_data = "export-image-thresholds.csv",
-                    marker_celltypes_data = "New_Marker_Celltypes.csv",
-                    rel_path = "R1D1ROI1")
+                    marker_celltypes_data = "MarkerExpressionProfiles.csv",
+                    rel_path = my_img)
 averages <- datalist[[1]]
 celltypes <- datalist[[2]]
-thresholds_clean <- datalist[[3]]
 
 
-
+write.csv(averages, paste0("../00_Data/AveragesCelltypes/", my_img, "_averagesdf.csv"))
+write.csv(celltypes, paste0("../00_Data/AveragesCelltypes/", my_img, "_celltypesdf.csv"))
 
 
 # "Madelenes selection": "actin", "cd3", "cd4",
@@ -160,11 +150,12 @@ thresholds_clean <- datalist[[3]]
 #   "fibulin2", "lyve1", "podoplanin"
 
 
-
-
-
-
-
+r1c1roi1 = averages
+r1c1roi1$InferredCellType = celltypes$InferredCellType
+geo <- read.csv(paste0("../CellShapeData/", my_img, "_Cellshape.csv"))
+r1c1roi1$X_coord = geo$Cell.Center.X
+r1c1roi1$Y_coord = geo$Cell.Center.Y
+write.csv(r1c1roi1, paste0("../AveragesCelltypes/", my_img, "_df.csv"))
 
 
 
