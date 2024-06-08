@@ -1,1 +1,131 @@
-rm(list=ls())library(tidyverse)library(DescTools) # for winsorize()library(ggplot2)source("create_data.R")###################### outlier detection ####################### code from https://www.r-bloggers.com/2016/04/identify-describe-plot-and-remove-the-outliers-from-the-dataset/outlierKD <- function(dt, var) {  var_name <- eval(substitute(var),eval(dt))  na1 <- sum(is.na(var_name))  m1 <- mean(var_name, na.rm = T)  par(mfrow=c(2, 2), oma=c(0,0,3,0))  boxplot(var_name, main="With outliers")  hist(var_name, main="With outliers", breaks=50, xlab=NA, ylab=NA)  outlier <- boxplot.stats(var_name)$out  mo <- mean(outlier)  var_name <- ifelse(var_name %in% outlier, NA, var_name)  boxplot(var_name, main="Without outliers")  hist(var_name, main="Without outliers", breaks=50, xlab=NA, ylab=NA)  title("Outlier Check", outer=TRUE)  na2 <- sum(is.na(var_name))  cat("Outliers identified:", na2 - na1, "\n")  cat("Proportion (%) of outliers:", round((na2 - na1) / sum(!is.na(var_name))*100, 1), "\n")  cat("Mean of the outliers:", round(mo, 2), "\n")  m2 <- mean(var_name, na.rm = T)  cat("Mean without removing outliers:", round(m1, 2), "\n")  cat("Mean if we remove outliers:", round(m2, 2), "\n")}outlierKD(averages, lyve1)######################## marker distribution ########################plot_marker <- function(df, marker) {  # marker = df[[marker]]  # Create a histogram  markercol = df[[marker]]  plot <- ggplot(df, aes(x = markercol)) +    geom_histogram(binwidth = max(markercol)/100, fill = "skyblue", color = "black") +    labs(title = paste("Intensity Distribution", marker, sep=" "),         x = "Intensity",         y = "Frequency")    return(plot)}marker_plot <- plot_marker(averages, "fibulin2")marker_plot################## NORMALISATION ################### min-max normalisationaverages_normalised <- data.frame(matrix(nrow = length(rownames(averages)), ncol = length(colnames(averages))))rownames(averages_normalised) <- rownames(averages)colnames(averages_normalised) <- colnames(averages)for (j in 1:ncol(averages)) {  biggest = max(averages[[j]])  smallest = min(averages[[j]])    for (i in 1:nrow(averages)) {    intensity = averages[i,j]    new_intensity = (intensity-smallest)/(biggest-smallest)    averages_normalised[i,j] = new_intensity  }}# winsorizationwinsorize_func <- function(averages) {  averages_winsorized <- as.data.frame(matrix(NA, nrow = nrow(averages), ncol = ncol(averages)))  rownames(averages_winsorized) <- rownames(averages)  colnames(averages_winsorized) <- colnames(averages)    for (i in colnames(averages)) {    outlier <- boxplot.stats(averages[[i]])$out # outliers identified with the interquartile range (IQR) criterion    m = mean(averages[[i]])    num_outliers <- length(outlier)    percent_outliers <- round(num_outliers / sum(!is.na(averages[[i]]))*100, 1)    percent_outliers_low <- round(sum(outlier < m) / sum(!is.na(averages[[i]]))*100, 1)    percent_outliers_high <- round(sum(outlier > m) / sum(!is.na(averages[[i]]))*100, 1)    print(i)    print(paste("There are ", num_outliers, "outliers in total, making up", percent_outliers, "% of the total values."))    print(paste(percent_outliers_low, "% are below the mean and", percent_outliers_high, "% are above the mean."))    print(paste("Mean",m))    print(paste("Num of outliers:",sum(outlier > m)))    print(paste("Outlier intensity value after winsorization:", min(outlier[outlier>m])))    cat("\n")            averages_winsorized[[i]] <- DescTools::Winsorize(averages[[i]], probs = c((percent_outliers_low/100) , 1-(percent_outliers_high/100)))      }  return(averages_winsorized)}averages_winsorized <- winsorize_func(averages)# standardizationstandardize_func <- function(averages_df, winsorized_check=TRUE) {  averages_scaled = as.data.frame(scale(averages_df))  return(list(averages_scaled, winsorized_check))}outlist = standardize_func(averages_winsorized, winsorized_check=TRUE)averages_scaled = outlist[[1]]winsorized_check = outlist[[2]]
+#rm(list=ls())
+library(tidyverse)
+library(DescTools) # for winsorize()
+library(ggplot2)
+
+#source("create_data.R")
+
+#####################
+# outlier detection #
+#####################
+
+# code from https://www.r-bloggers.com/2016/04/identify-describe-plot-and-remove-the-outliers-from-the-dataset/
+outlierKD <- function(dt, var) {
+  var_name <- eval(substitute(var),eval(dt))
+  na1 <- sum(is.na(var_name))
+  m1 <- mean(var_name, na.rm = T)
+  par(mfrow=c(2, 2), oma=c(0,0,3,0))
+  boxplot(var_name, main="With outliers")
+  hist(var_name, main="With outliers", breaks=50, xlab=NA, ylab=NA)
+  outlier <- boxplot.stats(var_name)$out
+  mo <- mean(outlier)
+  var_name <- ifelse(var_name %in% outlier, NA, var_name)
+  boxplot(var_name, main="Without outliers")
+  hist(var_name, main="Without outliers", breaks=50, xlab=NA, ylab=NA)
+  title("Outlier Check", outer=TRUE)
+  na2 <- sum(is.na(var_name))
+  cat("Outliers identified:", na2 - na1, "\n")
+  cat("Proportion (%) of outliers:", round((na2 - na1) / sum(!is.na(var_name))*100, 1), "\n")
+  cat("Mean of the outliers:", round(mo, 2), "\n")
+  m2 <- mean(var_name, na.rm = T)
+  cat("Mean without removing outliers:", round(m1, 2), "\n")
+  cat("Mean if we remove outliers:", round(m2, 2), "\n")
+}
+
+outlierKD(averages, lyve1)
+
+
+
+#######################
+# marker distribution #
+#######################
+
+plot_marker <- function(df, marker) {
+  # marker = df[[marker]]
+  # Create a histogram
+  markercol = df[[marker]]
+  plot <- ggplot(df, aes(x = markercol)) +
+    geom_histogram(binwidth = max(markercol)/100, fill = "skyblue", color = "black") +
+    labs(title = paste("Intensity Distribution", marker, sep=" "),
+         x = "Intensity",
+         y = "Frequency")
+  
+  return(plot)
+}
+
+marker_plot <- plot_marker(averages, "fibulin2")
+marker_plot
+
+
+
+#################
+# NORMALISATION #
+#################
+
+
+
+# min-max normalisation
+averages_normalised <- data.frame(matrix(nrow = length(rownames(averages)), ncol = length(colnames(averages))))
+rownames(averages_normalised) <- rownames(averages)
+colnames(averages_normalised) <- colnames(averages)
+for (j in 1:ncol(averages)) {
+  biggest = max(averages[[j]])
+  smallest = min(averages[[j]])
+  
+  for (i in 1:nrow(averages)) {
+    intensity = averages[i,j]
+    new_intensity = (intensity-smallest)/(biggest-smallest)
+    averages_normalised[i,j] = new_intensity
+  }
+}
+
+# winsorization
+winsorize_func <- function(averages) {
+  averages_winsorized <- as.data.frame(matrix(NA, nrow = nrow(averages), ncol = ncol(averages)))
+  rownames(averages_winsorized) <- rownames(averages)
+  colnames(averages_winsorized) <- colnames(averages)
+  
+  for (i in colnames(averages)) {
+    outlier <- boxplot.stats(averages[[i]])$out # outliers identified with the interquartile range (IQR) criterion
+    m = mean(averages[[i]])
+    num_outliers <- length(outlier)
+    percent_outliers <- round(num_outliers / sum(!is.na(averages[[i]]))*100, 1)
+    percent_outliers_low <- round(sum(outlier < m) / sum(!is.na(averages[[i]]))*100, 1)
+    percent_outliers_high <- round(sum(outlier > m) / sum(!is.na(averages[[i]]))*100, 1)
+    print(i)
+    print(paste("There are ", num_outliers, "outliers in total, making up", percent_outliers, "% of the total values."))
+    print(paste(percent_outliers_low, "% are below the mean and", percent_outliers_high, "% are above the mean."))
+    print(paste("Mean",m))
+    print(paste("Num of outliers:",sum(outlier > m)))
+    print(paste("Outlier intensity value after winsorization:", min(outlier[outlier>m])))
+    cat("\n")
+    
+    
+    averages_winsorized[[i]] <- DescTools::Winsorize(averages[[i]], probs = c((percent_outliers_low/100) , 1-(percent_outliers_high/100)))
+    
+  }
+  return(averages_winsorized)
+}
+
+
+# standardization
+standardize_func <- function(averages_df, winsorized_check=TRUE) {
+  averages_scaled = as.data.frame(scale(averages_df))
+  return(list(averages_scaled, winsorized_check))
+}
+# outlist = standardize_func(r1b1roi2_winsorized, winsorized_check=TRUE)
+# r1b1roi2_scaled = outlist[[1]]
+# winsorized_check = outlist[[2]]
+
+
+r1d1roi2_winsorized <- winsorize_func(r1d1roi2[1:12])
+r1d1roi2_scaled = standardize_func(r1d1roi2_winsorized, winsorized_check=TRUE)[[1]]
+
+# Add cell type and coords back on
+cols_to_add <- r1d1roi2[, c("InferredCellType", "X_coord", "Y_coord")]
+r1d1roi2_norm <- cbind(r1d1roi2_scaled, cols_to_add)
+
+
+
+
+
