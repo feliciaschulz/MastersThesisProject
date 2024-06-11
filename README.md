@@ -13,13 +13,16 @@
 
 ### 1.2 Cellpose
 
-## 2. Initial data investigation
+## 2. Create intensity frames
 
-## 3. Cell Type Inference
 
-## 4. Dimensionality Reduction
+## 3. Initial data investigation
 
-## 5. Cell Visualisation Application
+## 4. Cell Type Inference
+
+## 5. Dimensionality Reduction
+
+## 6. Cell Visualisation Application
 This is a Shiny application coded in R with which a UMAP plot can be created and the result visualised. The app was created out of the realisation that there would be much to benefit from being able to relate the clusters formed in a dimensionality reduction plot back to their original location and properties.
 
 The app works as follows: The data is loaded in and the original image is displayed as a  scatterplot with each cell as a point. 
@@ -29,7 +32,7 @@ points to see them displayed in the original image.
 The user can also select a certain region in the umap plot, and the selected cells will be displayed on the original image. Double-click to remove the selected region.
 
 #### Usage
-Open the script 05_CellVisualisationApplication/app.R in RStudio. Run the app by clicking "Run App" in the upper right corner in RStudio. Alternatively, run this command in the RStudio console:
+Open the script 06_CellVisualisationApplication/app.R in RStudio. Run the app by clicking "Run App" in the upper right corner in RStudio. Alternatively, run this command in the RStudio console:
 ```R
 runApp()
 ```
@@ -70,8 +73,41 @@ With this input data, nothing in the code of app.R has to be changed and it can 
 #### Output
 When running the app as specified in "Usage", it will automatically open in browser. Follow the above instructions to use the app.
 
-## 6. Distance Analysis
+## 7. Distance Analysis
+With the script 07_DistanceAnalysis/DistanceMatrix.ipynb, distance violin plots can be made as well as neighbour sankey diagrams.
 
+#### Usage
+If you don't have jupyter notebook yet, install it in the terminal like this:
+```bash
+pip install jupyter notebook
+```
+To run the notebook, run this command in the directory in which you have the scripts (or any earlier directory):
+```bash
+jupyter notebook
+```
+Jupyter notebook will be opened in your browser. You can navigate to your script file and open it.
+
+This notebook can be run as-is, cell-by-cell. 
+Small user modifications can be made in the notebook itself if desired. These options are indicated by "### USER-INPUT ###". More about this in the notebook itself.
+
+#### Required packages
+The code was written in Python v. 3.10.12. The following packages are required for and automatically loaded in the notebook:
+- os (in Python's standard utility packages)
+- statistics (in Python's standard utility packages)
+- matplotlib: 1.26.4
+- skimage: 0.22.0
+- pandas: v. 2.2.0
+- scipy: 1.12.0
+- plotly: 5.19.0
+
+
+#### Input
+As input data, this script takes the intensity data frames created in 2. that are saved in 00_Data/IntensitiesCelltypes.
+
+#### Output
+The script creates data frames and plots, none of which are automatically saved, because there are many different user-specific options. 
+The plots are created in the notebook and are displayed there as well.
+Instructions as to how to save the plots if desired can be found in the notebook itself.
 
 
 
