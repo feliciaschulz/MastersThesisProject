@@ -1,3 +1,43 @@
+##############################################
+# DIMENSIONALITY REDUCTION VISUALISATION APP 
+# 
+# This is a Shiny application with which a UMAP plot can be created
+# and the result visualised.
+# The data is loaded in and the original image is displayed as a 
+# scatterplot with each cell as a point. 
+# The umap can be created out of different subsets of the data.
+# The umap plot appears on the interface and the user can hover over
+# points to see them displayed in the original image.
+# The user can also select a certain region in the umap plot, and the
+# selected cells will be displayed on the original image. Double-click
+# to remove the selected region.
+#
+# Usage: Run the app by clicking "Run App" in the upper right corner in
+#   RStudio. Alternatively, run the command runApp() in the RStudio console.
+#
+# OBS: Make sure that the "intensities" data frame has the correct path.
+#   The variable my_img can be changed to inspect different images, given the
+#   format of the intensities data frame is the same.
+#
+# Known bugs / weaknesses: This application can have long loading times. Depending on the 
+#   size of the subset selected for the umap, the plot creation can take up to
+#   a few minutes. This is solely because the umap() function is computationally
+#   complex. Also, hover slowly. When selecting a region, after drawing the 
+#   circle around the chosen cells, leave the cursor in place and don't keep
+#   hovering. Otherwise, the application will detect your movement as hovering
+#   again and the selected region will disappear. The displaying of the selected
+#   region can also take a little while, because identifying the cells and
+#   referring to the original data frame with coordinates is computationally
+#   complex as well.
+# 
+# Input: A data frame with cells in rows, biomarker intensity data in columns,
+#   two columns for x and y coordinates (X_coord, Y_coord), area of cell (area),
+#   cell phenotype (InferredCellType). 
+#   Accessible in folder "../00_Data/IntensitiesCelltypes/"
+###############################################
+
+
+
 library(shiny)
 library(plotly)
 library(bslib)
@@ -6,50 +46,46 @@ library(umap)
 library(dplyr)
 
     
-set.seed(20) # make sure its always the same
+set.seed(20) # Make sure the umap result is always the same 
+
+#### Load in data
 my_img = "R1B1ROI1"
 intensities = read.csv(paste0("../00_Data/IntensitiesCelltypes/", my_img, "_intensitiesdf.csv"))
-geo2 = intensities #%>% select(X_coord, Y_coord)
-geo2$colour = "nohover"
+geo = intensities 
+geo$colour = "nohover"
 
 
-# Define UI ----
+#### Define the User Interface
 ui <- fluidPage(
   titlePanel("Cell visualisation app"),
   sidebarLayout(
     sidebarPanel(
+      # Input dropdown dimensionality reduction method
       selectInput(
         "method",
         "Select dimensionality reduction method",
         choices = list("t-SNE", "UMAP"),
         selected = 1
       ),
+      # Input selection cell type subset for umap
       checkboxGroupInput(
         inputId = "celltype",
         label = "Select all cell types that should be included",
         choices=list("Mixed", "Myocytes", "Other", "Lymphatic vessel", "Extracellular matrix", "T-cells Memory",
                      "T-cells CD4+ (helper)", "T-cells Mixed", "Epithelial cells", "T-cells Naive", "B-cells Plasma"),
-        selected = 1
+        selected = 19
       ),
+      # "Run" button
       actionButton(inputId="submit_button", label="Run"),
       width = 2
     ),
     mainPanel(
-      
-        plotlyOutput("dimredplot"), 
+        plotlyOutput("dimredplot"), # umap plot
         textOutput("vector"),
-        plotlyOutput("scatterplot"), 
-        textOutput("more_text"),
-        #imageOutput("coloured_img")
-        verbatimTextOutput("brush_info")
+        plotlyOutput("scatterplot"), # scatterplot
+        textOutput("more_text")
         
-      
-    # ),
-    # fluidRow(
-    #   column(width = 6,
-    #          h4("Brushed points"),
-    #          verbatimTextOutput("brush_info")
-      #)
+        
     )
     
   )
@@ -57,28 +93,33 @@ ui <- fluidPage(
 
 
 
-# Define server logic ----
+#### Define the server
 server <- function(input, output, session) {
+  
+  # Create input intensity data from subset of selection from selection button
   data_int <- eventReactive(input$submit_button, {
-    celltype_choices = input$celltype
-    intensities_df <- intensities[intensities$InferredCellType %in% celltype_choices, ]
-    intensities_df <- intensities_df %>% select(-InferredCellType, -X_coord, -Y_coord)
+    celltype_choices = input$celltype # cell types chosen by user
+    intensities_df <- intensities[intensities$InferredCellType %in% celltype_choices, ] # subset df with choices
+    intensities_df <- intensities_df %>% select(-InferredCellType, -X_coord, -Y_coord) # remove non-intensity columns
     return(intensities_df)
   })
   
+  # Create input data frame for celltypes 
   data_ct <- eventReactive(input$submit_button, {
-    celltype_choices = input$celltype
-    celltypes_df <- intensities[intensities$InferredCellType %in% celltype_choices, ]
-    celltypes_df$colour = "nohover"
-    celltypes_df$pointsize <- 2
+    celltype_choices = input$celltype # cell types chosen by user
+    celltypes_df <- intensities[intensities$InferredCellType %in% celltype_choices, ] # subset df with choices
+    celltypes_df$colour = "nohover" # set as default, later, selected points will be individually changed to "hover" and then have a different colour
+    celltypes_df$pointsize <- 2 # set as default, later, selected points will be individually changed to a larger size
     return(celltypes_df)
   })
   
-  
+  # create umap data frame
   compute <- eventReactive(input$submit_button, {
-    method = input$method
-    set.seed(20)
-    if (method=="t-SNE") {
+    method = input$method # method chosen by user
+    set.seed(20) # just in case :)
+    
+    # run dimensionality reduction
+    if (method=="t-SNE") { 
       tsne_out <- Rtsne(data_int(),
                     pca=TRUE,
                     perplexity=30,
@@ -86,17 +127,18 @@ server <- function(input, output, session) {
                     max_iter=500,
                     epoch=100)
       Y <- as.data.frame(tsne_out$Y)
-      df <- data.frame(col1=Y$V1, col2=Y$V2)
-      df$cell_index <- rownames(df)
+      df <- data.frame(col1=Y$V1, col2=Y$V2) # clean up output data frame
+      df$cell_index <- rownames(df) # add cell_index so we can later refer back to the original row index and find coordinates
 
     } else { #method==UMAP
       umap_out <- umap(data_int())
-      df <- data.frame(col1=umap_out$layout[,1], col2=umap_out$layout[,2])
-      df$cell_index <- rownames(df)
+      df <- data.frame(col1=umap_out$layout[,1], col2=umap_out$layout[,2]) # clean up output data frame
+      df$cell_index <- rownames(df) # add cell_index so we can later refer back to the original row index and find coordinates
     }
     return(df)
   })
   
+  # Display text on umap plot while hovering over
   hover_text <- eventReactive(input$submit_button, {
     paste("Cell number:", 1:nrow(data_int()),"<br>", "Cell size:", data_int()$area,"<br>", "<br>", "Actin:         ", data_int()$actin, "<br>", 
                         "cd3:            ", data_int()$cd3, "<br>", "cd4:            ", data_int()$cd4, "<br>", "cd45:          ", data_int()$cd45, "<br>", 
@@ -106,14 +148,15 @@ server <- function(input, output, session) {
   })
   
 
-  
-  # output$vector <- renderText({
-  #   paste("There are", nrow(compute()), "cells in your selection.\n You have used the", 
-  #         input$method, "method.")
-  # })
-  # 
-  
+  # Display information about how many cells and how to use
+  output$vector <- renderText({
+    paste("There are", nrow(compute()), "cells in your selection.\nYou have used the",
+          input$method, "method.\nClick and drag events (i.e., select/lasso) appear below (double-click to clear).\n
+          Hover events also appear below.")
+  })
 
+  
+  # Dimensionality reduction plot
   output$dimredplot <- renderPlotly({
     p <- plot_ly(data = compute(), x = ~col1, y = ~col2, color = ~data_ct()$InferredCellType, colors = "Spectral", type = "scatter", 
             mode = "markers", text=hover_text(), source = "plot1") %>%
@@ -124,45 +167,46 @@ server <- function(input, output, session) {
         showlegend = TRUE, 
         dragmode = "lasso"
       )
-    event_register(p, "plotly_hover")
+    event_register(p, "plotly_hover") # Register user events
     event_register(p, "plotly_selected")
     return(p)
   })
   
+  # Scatterplot with coordinates
   output$scatterplot <- renderPlotly({
-    plot_ly(geo2, x = ~X_coord, y = ~Y_coord, type = "scatter", color = ~colour, colors = c("grey"), 
+    plot_ly(geo, x = ~X_coord, y = ~Y_coord, type = "scatter", color = ~colour, colors = c("grey"), 
             mode = "markers", marker = list(color = "grey", size = 2)) %>%
       layout(title = "Original image")
   })
+
   
-  # Output brushed points
-  output$brush_info <- renderPrint({
-    d <- event_data("plotly_selected")
-    if (is.null(d)) {
-      "Click and drag events (i.e., select/lasso) appear here (double-click to clear)"
-    } else {
-      d
-    }
-  })
-  
+  # Code for registering lasso selection points and displaying on scatterplot
   observeEvent(event_data("plotly_selected", source = "plot1"), {
-    selected_points <- event_data("plotly_selected", source = "plot1")
-    if (!is.null(selected_points)) {
+    selected_points <- event_data("plotly_selected", source = "plot1") # the data registered by the app
+    if (!is.null(selected_points)) { # if a selection has been made
       indices <- selected_points$pointNumber + 1  # Adjust for 1-based indexing
-      dimred_x <- selected_points$x
-      dimred_y <- selected_points$y
+      dimred_x <- selected_points$x # data frame with umap x coords
+      dimred_y <- selected_points$y # data frame with umap y coords
 
       
+      # Load in umap data frame again, but just coordinates
+      # The coordinates registered by the event_data can't be directly accessed in the 
+      # origin dimensionality reduction df, because the values are slightly changed
+      # by the application, so we have to find them by looping
+      # through and finding close matches
       dim_red_df <- compute() %>% select(-cell_index)
       data_rounded <- round(dim_red_df, 2) # getting the data from here
       tolerance <- 1e-6 # Defining a tolerance for imperfect matches
       
+      # Initialise vector for collecting cell indexes
       cell_indexes_selected <- c()
       
+      # Loop through x and y coordinates
       for (i in seq_along(dimred_x)) {
         row_to_check <- c(round(dimred_x[i], 2), round(dimred_y[i], 2))
         row_index <- which(apply(data_rounded, 1, function(row) all(abs(row - row_to_check) < tolerance))) # Check if any row matches within tolerance
         
+        # Might find multiple close matches, choose first one
         if (length(row_index) == 1) {
           row_index <- row_index
         } else if (length(row_index ) > 1) {
@@ -171,37 +215,44 @@ server <- function(input, output, session) {
           row_index <- 0
         }
         
+        # If a matching row has been found
         if (row_index != 0) {
-          cell_index <- compute()[row_index, ]$cell_index
-          
-          cell_indexes_selected <- c(cell_indexes_selected, cell_index)
-
+          cell_index <- compute()[row_index, ]$cell_index # access original cell index from row in dim red df
+          cell_indexes_selected <- c(cell_indexes_selected, cell_index) # add cell index to vector
         }
       }
       
+      # If the cell index vector has cells found, display in scatterplot
       if (!is.null(cell_indexes_selected)) {
-        geo2$colour <- "lightgrey"
-        geo2[cell_indexes_selected, ]$colour <- "black"
+        geo$colour <- "lightgrey" # set all points back to grey
+        geo[cell_indexes_selected, ]$colour <- "black" # change only selected cell indexes to black
         
-        geo2$pointsize <- 2
-        geo2[cell_indexes_selected, ]$pointsize <- 7
+        geo$pointsize <- 2 # set all points back to small
+        geo[cell_indexes_selected, ]$pointsize <- 7 # change only selected cell indexes to big
         
+        # Change original df with new columns and update plot
         plotlyProxy("scatterplot", session) %>%
-          plotlyProxyInvoke("restyle", list(marker = list(color = geo2$colour, size = geo2$pointsize)))
-      }
+          plotlyProxyInvoke("restyle", list(marker = list(color = geo$colour, size = geo$pointsize)))
+      } 
       
     
 
     }
   })
 
-
+  # Code for registering lasso selection points and displaying on scatterplot
   observeEvent(event_data("plotly_hover", source = "plot1"), {
-    hover_info <- event_data("plotly_hover", source = "plot1")
-    x <- round(hover_info$x, 2)
-    y <- round(hover_info$y, 2)
-    row_to_check <- c(x, y)
+    hover_info <- event_data("plotly_hover", source = "plot1") # the data registered by the app
+    x <- round(hover_info$x, 2) # x coord
+    y <- round(hover_info$y, 2) # y coord
+    row_to_check <- c(x, y) # total coord as vector
 
+    
+    # Load in umap data frame again, but just coordinates
+    # The coordinates registered by the event_data can't be directly accessed in the 
+    # origin dimensionality reduction df, because the values are slightly changed
+    # by the application, so we have to find them by looping
+    # through and finding close matches
     dim_red_df <- compute() %>% select(-cell_index)
     data_rounded <- round(dim_red_df, 2) # getting the data from here
     tolerance <- 1e-6 # Defining a tolerance for imperfect matches
@@ -216,28 +267,22 @@ server <- function(input, output, session) {
       row_index = 0
     }
   
-
-
+    # if it has found a cell, display in scatterplot
     if (!is.null(row_index)) {
-      cell_index = compute()[row_index, ]$cell_index
+      cell_index = compute()[row_index, ]$cell_index # access original cell index from row in dim red df
       
-      x_coord <- geo2[cell_index, "X_coord"] # geo has my coordinates
-      y_coord <- geo2[cell_index, "Y_coord"]
+      geo$colour <- "lightgrey" # set all points back to grey
+      geo[cell_index, ]$colour <- "black" # change selected point to black
 
+      geo$pointsize <- 2 # set all points back to small
+      geo[cell_index, ]$pointsize <- 7 # change selected point to big
 
-      geo2$colour <- "lightgrey"
-      geo2[cell_index, ]$colour <- "black"
-
-      geo2$pointsize <- 2
-      geo2[cell_index, ]$pointsize <- 7
-
+      # Change original df with new columns and update plot
       plotlyProxy("scatterplot", session) %>%
-        plotlyProxyInvoke("restyle", list(marker  = list(color = geo2$colour, size = geo2$pointsize)))
+        plotlyProxyInvoke("restyle", list(marker  = list(color = geo$colour, size = geo$pointsize)))
     }
 
 })
-
-
 
   
 }
@@ -245,15 +290,5 @@ server <- function(input, output, session) {
 
 shinyApp(ui = ui, server = server)
 
-
-# # Render the image and draw a point at the extracted coordinates
-# output$geoPlot <- renderPlot({
-#   # Render the image
-#   img <- readJPEG("C-000_S-000_S_DAPI_R-01_W-B-1_ROI-01_A-DAPI.jpg")
-#   rasterImage(img, 0, 0, 1, 1)
-#   
-#   # Draw the point on the image
-#   points(x_coord, y_coord, col = "red", pch = 16)
-# }, res = 96, width = 800, height = 600)
 
 
