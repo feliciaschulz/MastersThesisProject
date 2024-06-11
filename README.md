@@ -36,6 +36,21 @@ runApp()
 
 OBS: Make sure that the "intensities" data frame has the correct path. The variable my_img can be changed to inspect different images, given the format of the intensities data frame is the same.
 
+#### Required packages
+The app uses the following packages and versions:
+- Shiny: 1.8.1.1
+- plotly: 4.10.4
+- bslib: 0.7.0
+- Rtsne: 0.7.0 !!
+- umap: 0.2.10.0
+- dplyr: 1.1.4
+
+Check your package versions in the R console with 
+```R
+packageVersion("<package name>")
+```
+
+
 #### Known bugs / weaknesses
 This application can have long loading times. Depending on the size of the subset selected for the umap, the plot creation can take up to a few minutes. This is solely because the umap() function is computationally complex. 
 
