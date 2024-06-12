@@ -55,9 +55,74 @@ This script saves one data frame for each biomarker-stained input image to "00_D
 Make sure to have created the output folder already before saving the images.
 
 
-## 3. Initial data investigation
 
-## 4. Cell Type Inference
+
+
+## 3. Cell Type Inference
+create_data, violin, heatmaps, check_celltypes, count_instances
+
+
+### 3.1 Create cell type data frame
+The next step in this analysis is the computational cell type assignment. For this purpose, the script **create_data.R** in 03_CellTypeInference was made. This script takes cell intensity data frames as input csv files and predicts cell types for each cell based on its intensity values for different markers. 
+
+It uses an input csv file with thresholds for each marker that decide at which intensity value the signal is seen as true and positive. Based on that, it creates a binary data frame with positive / negative expressions for each cell for each marker. Then, a binary marker expression profiles file is used as input to determine which cell type profile fits each cell. The final inferred cell type is then written to a data frame along with area, centroids and intensity information. It is then saved.
+
+#### Usage: 
+Run the script either line-by-line in RStudio or source it (top right corner button in RStudio). If you want to change the input image, change the string assigned to the variable "my_img" below.
+
+#### Input: 
+- Data frame with cells in rows, biomarker intensity data in columns, two columns for x and y coordinates (X_coord, Y_coord), area of cell (area) from folder "../00_Data/IntensitiesCelltypes/"
+- Thresholds csv file with biomarkers as rows and threshold minimum values as columns from "../00_Data/Thresholds/"
+- Marker Expression Profiles csv file with cell types as rows, biomarkers as columns and binary values indicating positive or negative expression from "../00_Data/"
+
+#### Output: 
+Two csv files in the folder "../00_Data/IntensitiesCelltypes/"
+- ..._intensitiesdf.csv: intensity data as well as centroids, area, inferred cell type
+- ..._celltypesdf.csv: binary marker expression data as well as inferred cell type
+
+
+
+!! try out with cleared environment to see if any packages are necessary
+
+## 4. Data investigation & Normalisation
+data_exploration.R, analyse_thresholds.R
+
+### 4.1 Analysing thresholds
+The intensity thresholds that were chosen for each marker as indicators of positive marker expression vs negative marker expression (true signal vs noise) are saved as csv files in "../00_Data/Thresholds".
+
+These data frames can be summarised and cleaned up with **analyse_thresholds.R**, which can be found in 04_DataInvestigationNormalisation.
+
+#### Usage:
+Open the script in RStudio and run, either line-by-line or by using the "Source" button.
+BUT: Seeing as the purpose of this script is to summarise all threshold data frames, it requires all threshold files as input. However, only the first one is provided as example input data here, therefore, this script cannot be run this way.
+
+#### Input: 
+Thresholds data frames from "../00_Data/Thresholds"
+
+#### Output: 
+One data frame including all thresholds values for all images called filtered_thresholds_all.csv, saved in "00_Data/Thresholds"
+
+### 4.2 Data Exploration & Normalisation
+This script, **data_exploration.R** in "04_DataInvestigationNormalisation" takes the intensities data frame as input and lets the user run a variety of functions to inspect the data, such as marker expression levels.
+In addition to that, multiple normalisation methods are available as functions.
+These can again be plotted with the plotting functions and the results can be compared.
+
+#### Usage: 
+Due to the different functionalities of this script, it is up to the user to decide which functions to run and which markers to inspect and plot.
+Therefore, this script is best run line-by-line (rather than sourcing).
+The user can also choose the image to be investigated. Here, it is already set to R1B1ROI1 because that is the example image provided in this repository.
+
+#### Required packages & versions: 
+- tidyverse: 2.0.0
+- DescTools: 0.99.54
+- ggplot2: 3.5.0
+
+#### Input: 
+An intensity data frame from "00_Data/IntensitiesCelltypes/"
+
+#### Output: 
+Depends on each function. Some output text in the console, some plots, some return data frames.
+If the script is run as-is, for example sourced, the loaded intensity data frame will be winsorized, scaled and then saved to "../00_Data/Normalised/".
 
 
 ## 5. Dimensionality Reduction
@@ -102,6 +167,8 @@ Hover slowly. Due to the live computations, there will be a slight delay.
 
 When selecting a region, after drawing the circle around the chosen cells, leave the cursor in place and don't keep hovering. Otherwise, the application will detect your movement as hovering again and the selected region will disappear. 
 The displaying of the selected region can also take a little while, because identifying the cells and referring to the original data frame with coordinates is computationally complex as well.
+
+When running the application, warnings might appear, they can be ignored.
 
 #### Input 
 A data frame csv file with cells in rows, biomarker intensity data in columns, two columns for x and y coordinates (X_coord, Y_coord), area of cell (area), cell phenotype (InferredCellType). The input data should be accessible from the folder "../00_Data/IntensitiesCelltypes/".
