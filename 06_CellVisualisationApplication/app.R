@@ -15,6 +15,14 @@
 # Usage: Run the app by clicking "Run App" in the upper right corner in
 #   RStudio. Alternatively, run the command runApp() in the RStudio console.
 #
+# Required packages & versions:
+#   - shiny: 1.8.1.1
+#   - plotly: 4.10.4
+#   - bslib: 0.7.0
+#   - Rtsne: 0.17
+#   - umap: 0.2.10.0
+#   - dplyr: 1.1.4
+#
 # OBS: Make sure that the "intensities" data frame has the correct path.
 #   The variable my_img can be changed to inspect different images, given the
 #   format of the intensities data frame is the same.
@@ -50,7 +58,7 @@ set.seed(20) # Make sure the umap result is always the same
 
 #### Load in data
 my_img = "R1B1ROI1"
-intensities = read.csv(paste0("../00_Data/IntensitiesCelltypes/", my_img, "_intensitiesdf.csv"))
+intensities = read.csv(paste0("../Old00_Data/IntensitiesCelltypes/", my_img, "_intensitiesdf.csv"))
 geo = intensities 
 geo$colour = "nohover"
 
@@ -64,7 +72,7 @@ ui <- fluidPage(
       selectInput(
         "method",
         "Select dimensionality reduction method",
-        choices = list("t-SNE", "UMAP"),
+        choices = list("UMAP"),
         selected = 1
       ),
       # Input selection cell type subset for umap
@@ -118,23 +126,11 @@ server <- function(input, output, session) {
     method = input$method # method chosen by user
     set.seed(20) # just in case :)
     
-    # run dimensionality reduction
-    if (method=="t-SNE") { 
-      tsne_out <- Rtsne(data_int(),
-                    pca=TRUE,
-                    perplexity=30,
-                    k=2,
-                    max_iter=500,
-                    epoch=100)
-      Y <- as.data.frame(tsne_out$Y)
-      df <- data.frame(col1=Y$V1, col2=Y$V2) # clean up output data frame
-      df$cell_index <- rownames(df) # add cell_index so we can later refer back to the original row index and find coordinates
-
-    } else { #method==UMAP
-      umap_out <- umap(data_int())
-      df <- data.frame(col1=umap_out$layout[,1], col2=umap_out$layout[,2]) # clean up output data frame
-      df$cell_index <- rownames(df) # add cell_index so we can later refer back to the original row index and find coordinates
-    }
+    # run dimensionality reduction with umap
+    umap_out <- umap(data_int())
+    df <- data.frame(col1=umap_out$layout[,1], col2=umap_out$layout[,2]) # clean up output data frame
+    df$cell_index <- rownames(df) # add cell_index so we can later refer back to the original row index and find coordinates
+  
     return(df)
   })
   
@@ -150,8 +146,7 @@ server <- function(input, output, session) {
 
   # Display information about how many cells and how to use
   output$vector <- renderText({
-    paste("There are", nrow(compute()), "cells in your selection.\nYou have used the",
-          input$method, "method.\nClick and drag events (i.e., select/lasso) appear below (double-click to clear).\n
+    paste("There are", nrow(compute()), "cells in your selection.\nYou have used the UMAP method.\nClick and drag events (i.e., select/lasso) appear below (double-click to clear).\n
           Hover events also appear below.")
   })
 
@@ -161,12 +156,13 @@ server <- function(input, output, session) {
     p <- plot_ly(data = compute(), x = ~col1, y = ~col2, color = ~data_ct()$InferredCellType, colors = "Spectral", type = "scatter", 
             mode = "markers", text=hover_text(), source = "plot1") %>%
       layout(
-        xaxis = list(title = paste(input$method, "- 1")),
-        yaxis = list(title = paste(input$method, "- 2")),
-        title = paste(input$method, " for ", my_img, " with nuclei and cyto segmentation"),
+        xaxis = list(title = ("UMAP - 1")),
+        yaxis = list(title = ("UMAP - 2")),
+        title = paste("UMAP for ", my_img, " with nuclei and cyto segmentation"),
         showlegend = TRUE, 
         dragmode = "lasso"
       )
+    #fig['layout']['yaxis']['autorange'] = "reversed"
     event_register(p, "plotly_hover") # Register user events
     event_register(p, "plotly_selected")
     return(p)
@@ -176,7 +172,7 @@ server <- function(input, output, session) {
   output$scatterplot <- renderPlotly({
     plot_ly(geo, x = ~X_coord, y = ~Y_coord, type = "scatter", color = ~colour, colors = c("grey"), 
             mode = "markers", marker = list(color = "grey", size = 2)) %>%
-      layout(title = "Original image")
+      layout(title = "Original image", yaxis = list(autorange = "reversed"))
   })
 
   
