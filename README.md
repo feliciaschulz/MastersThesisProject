@@ -1,8 +1,25 @@
 # README Bioinformatics Thesis Project
 
 ## Introduction to this repository
+This repository contains all code created in association with my MSc Bioinformatics Degree Project.
+
+The title of this thesis is **"Investigating The Locations of Lymphocytes in Healthy Lungs Using Cyclic Fluorescent Antibody-Stained Imaging Data"**.
+
+All code in this repository was written by Felicia Schulz.
 
 ### Folder structure of this repository
+This repository has the following structure:
+
+0. 00_Data - containing example input data for most scripts
+1. 01_Segmentation - containing code for StarDist cell segmentation, as well as some environment files
+2. 02_CreateIntensityDfs - containing code for computing intensity data frames from images and segmentation masks
+3. 03_CellTypeInference - containing an algorithm that classifies cells into cell types computatinoally; and code for investigating the inferred cell types by plotting them
+4. 04_DataInvestigationNormalisation - containing multiple scripts for normalisation, further analysing the data, and plotting
+5. 05_DimensionalityReduction - containing code for creating dimensionality reduction plots
+6. CellVisualisationApplication - containing code for an app with which one can further analyse dimensionality reduction plots and make sense of the results
+7. 07_DistanceAnalysis - containing a script for measuring distances between cell types and creating different kinds of plots to visualise them
+
+And finally, this README file, containing information on every single script, its usage, input and output files, and required packages.
 
 ## Abstract
 The aim of this research project was to create a bioinformatic image analysis pipeline for the investigation of lymphocytes in healthy human lungs. 
@@ -33,7 +50,6 @@ Find the GitHub repository here: https://github.com/stardist/stardist
 
 The script used here called **StardistPretrained2DPrediction.ipynb** was adapted from the example usage scripts on StarDist's GitHub.
 In a Jupyter Notebook, images and the segmentation model are loaded. The prediction is then carried out, the image with the segmentation mask is plotted and the results can be saved to folder. The script can be found in 01_Segmentation.
-
 #### Usage
 An environment file can also be found in 01_Segmentation to facilitate usage.
 This is how you can use the stardist_env.yml file to create the conda environment, and have Jupyter Notebook run on the specific environment:
@@ -52,14 +68,21 @@ jupyter notebook
 # After having opened a jupyter notebook, choose "Python (stardist_env)" as the kernel
 ```
 
-Once all the required packages have been installed and can be imported, the notebook can be run cell-by-cell. Make sure the input data is in the folder "prediction_on_images_stardist2d" and that the images have the extension .tif. 
+If you don't have jupyter notebook yet, install it in the terminal like this:
+```bash
+pip install jupyter notebook
+```
+To run the notebook, run this command in the directory in which you have the scripts (or any earlier directory):
+```bash
+jupyter notebook
+```
+Jupyter notebook will be opened in your browser. You can navigate to your script file and open it.
 
+Once all the required packages have been installed and can be imported, the notebook can be run cell-by-cell. Make sure the input data is in the folder "prediction_on_images_stardist2d" and that the images have the extension .tif. 
 #### Required packages
 StarDist was used with version 0.8.5. All other required packages can be found in the stardist_env.yml file.
-
 #### Input
 Images in .tif file format from the folder "prediction_on_images_stardist2d" that is in the same folder as this Notebook.
-
 #### Output
 A segmentation mask called "labels*.tif", the original image called "image*.tif" and a zip file containing segmented cell ROIs called "rois*.zip", saved to the same folder in which the Notebook is. Images are also plotted within the notebook itself.
 
@@ -73,7 +96,6 @@ Find the trainable GUI Cellpose paper here:
 Pachitariu, M., & Stringer, C. (2022). Cellpose 2.0: how to train your own model. Nature methods, 19(12), 1634-1641.
 
 Find the Cellpose GitHub repository here: https://github.com/MouseLand/cellpose
-
 #### Usage
 An environment file can also be found in 01_Segmentation to facilitate usage.
 This is how you can use the cellpose_env.yml file to create the conda environment, and have Jupyter Notebook run on the specific environment:
@@ -90,13 +112,10 @@ Then, you can run the Cellpose GUI with this command:
 python -m cellpose
 ```
 Find out more about how to use the Cellpose GUI on the GitHub repository linked above.
-
 #### Required packages
 Cellpose was used with version 2.2.3. All other required packages can be found in the cellpose_env.yml file.
-
 #### Input
 The GUI has a variety of input options. Most importantly, you can input a .tif image, either by drag-and-drop or by choosing the import option via the menu. Find out more about how to use the Cellpose GUI on the GitHub repository linked above.
-
 #### Output
 The GUI has a variety of output options. Most importantly, you can save a .tif segmentation mask or a .zip file with all of the cell ROIs. Find out more about how to use the Cellpose GUI on the GitHub repository linked above.
 
@@ -111,7 +130,6 @@ This script allows for that to happen, if necessary.
 If the dimensions are not the same for any other reason, the padding code in this script is not appropriate for fixing the problem.
 
 After creating the data frames, they are saved to the data folder.
-
 #### Usage
 If you don't have jupyter notebook yet, install it in the terminal like this:
 ```bash
@@ -124,20 +142,17 @@ jupyter notebook
 Jupyter notebook will be opened in your browser. You can navigate to your script file and open it.
 
 This notebook can be run as-is, cell-by-cell. 
-
 #### Required packages
 The code was written in Python v. 3.10.12. The following packages are required for and automatically loaded in the notebook:
 - scikit-image: 0.22.0
 - numpy: 1.26.4
 - pandas: 2.2.0
-
 #### Input
 This script requires a labelled segmentation mask as input, which should be saved in "00_Data/NucleiCytoMasks". It also takes stitched preprocessed multiplexed stained images as input from the folder "00_Data/PP_Images".
 All images and masks should be the exact same shape. The input files should be .tif files.
 
 This script is initialised with the variable roi, which decides the name of the sample image to be measured.
 In this script, the correct name of the image available as example data is already assigned to the roi variable.
-
 #### Output
 This script saves one data frame for each biomarker-stained input image to "00_Data/IntensityDataFrames/<img name>" as csv files.
 Make sure to have created the output folder already before saving the images.
@@ -147,10 +162,9 @@ Make sure to have created the output folder already before saving the images.
 
 
 ## 3. Cell Type Inference
-create_dataDONE, check_celltypesDONE
 
 
-### 3.1 Create cell type data frame
+### 3.1 Create cell type data frames
 The next step in this analysis is the computational cell type assignment. For this purpose, the script **create_data.R** in 03_CellTypeInference was made. This script takes cell intensity data frames as input csv files and predicts cell types for each cell based on its intensity values for different markers. 
 
 It uses an input csv file with thresholds for each marker that decide at which intensity value the signal is seen as true and positive. Based on that, it creates a binary data frame with positive / negative expressions for each cell for each marker. Then, a binary marker expression profiles file is used as input to determine which cell type profile fits each cell. The final inferred cell type is then written to a data frame along with area, centroids and intensity information. It is then saved.
