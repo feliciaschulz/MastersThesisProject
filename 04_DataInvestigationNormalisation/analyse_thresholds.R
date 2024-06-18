@@ -95,7 +95,7 @@ filtered_th$SD_Min <- sd_values
 View(filtered_th)
 
 # Save data frame as csv file
-write_csv(filtered_th, paste0(path, "/filtered_thresholds_all.csv"))
+write.csv(filtered_th, paste0(path, "/filtered_thresholds_all.csv"))
 
 
 
