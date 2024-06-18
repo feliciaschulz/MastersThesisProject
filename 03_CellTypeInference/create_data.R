@@ -18,9 +18,9 @@
 # the variable "my_img" below.
 # 
 # Input: 
-#   - Data frame with cells in rows, biomarker intensity data in columns,
+#   - Data frames with cells in rows, biomarker intensity data in columns,
 #     two columns for x and y coordinates (X_coord, Y_coord), area of cell (area)
-#     from folder "../00_Data/IntensitiesCelltypes/"
+#     from folder "../00_Data/IntensityDataFrames/"
 #   - Thresholds csv file with biomarkers as rows and threshold minimum values as 
 #     columns from "../00_Data/Thresholds/"
 #   - Marker Expression Profiles csv file with cell types as rows, biomarkers as columns
@@ -174,6 +174,9 @@ datalist <- create_data(markers = c("actin", "cd3", "cd4",
 # Save output to variables (function returns a list of two objects)
 intensities <- datalist[[1]]
 celltypes <- datalist[[2]]
+
+r1d1roi2_ct = celltypes
+
 
 # Save to folder
 write.csv(intensities, paste0("../00_Data/IntensitiesCelltypes/", my_img, "_intensitiesdf.csv"))
