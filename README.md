@@ -101,7 +101,7 @@ The GUI has a variety of input options. Most importantly, you can input a .tif i
 The GUI has a variety of output options. Most importantly, you can save a .tif segmentation mask or a .zip file with all of the cell ROIs. Find out more about how to use the Cellpose GUI on the GitHub repository linked above.
 
 
-## 2. Create intensity frames
+## 2. Create intensity data frames
 In this script, raw (stitched) images and their respective segmentation masks are loaded. The script reads the images into the notebook and their dimensions are checked. 
 If the dimensions are correct, the images are measured and their data is saved to data frames. The intensity values for each cell (min, mean, max) are saved, as well as cell area (in pixels) and their centroids. 
 
@@ -147,46 +147,57 @@ Make sure to have created the output folder already before saving the images.
 
 
 ## 3. Cell Type Inference
-create_dataDONE, check_celltypes
+create_dataDONE, check_celltypesDONE
 
 
 ### 3.1 Create cell type data frame
 The next step in this analysis is the computational cell type assignment. For this purpose, the script **create_data.R** in 03_CellTypeInference was made. This script takes cell intensity data frames as input csv files and predicts cell types for each cell based on its intensity values for different markers. 
 
 It uses an input csv file with thresholds for each marker that decide at which intensity value the signal is seen as true and positive. Based on that, it creates a binary data frame with positive / negative expressions for each cell for each marker. Then, a binary marker expression profiles file is used as input to determine which cell type profile fits each cell. The final inferred cell type is then written to a data frame along with area, centroids and intensity information. It is then saved.
-
 #### Usage: 
 Run the script either line-by-line in RStudio or source it (top right corner button in RStudio). If you want to change the input image, change the string assigned to the variable "my_img" below.
-
 #### Input: 
 - Data frames with cells in rows, biomarker intensity data in columns, two columns for x and y coordinates (X_coord, Y_coord), area of cell (area) from folder "../00_Data/IntensityDataFrames/". One data frame for each marker.
 - Thresholds csv file with biomarkers as rows and threshold minimum values as columns from "../00_Data/Thresholds/"
 - Marker Expression Profiles csv file with cell types as rows, biomarkers as columns and binary values indicating positive or negative expression from "../00_Data/"
-
 #### Output: 
 Two csv files in the folder "../00_Data/IntensitiesCelltypes/"
 - ..._intensitiesdf.csv: intensity data as well as centroids, area, inferred cell type
 - ..._celltypesdf.csv: binary marker expression data as well as inferred cell type
 
-
-
 !! try out with cleared environment to see if any packages are necessary
 
+### 3.2 Check inferred cell types with scatterplots
+The script called **check_celltypes.R** in"03_CellTypeInference/" takes files with the inferred cell types of cells as well as their coordinates and creates scatterplots coloured by cell types.
+The user can either choose to only create a plot for one image by having the  variable "onlyOneDF" == TRUE, or to create a grid of multiple plots for multiple images. For just one image, the image name must be changed in "img_name", and for multiple images, all paths and filenames need to be checked.
+The plot axes are in micrometres.
+#### Usage: 
+Run the script line-by-line in RStudio or click "Source" in the top right corner. 
+If you want to change the input image, change the string assigned to the variable "my_img".
+#### Required packages & versions: 
+- ggplot2: 3.5.0
+- dplyr: 1.1.4
+- patchwork: 1.2.0
+#### Input: 
+- Raw data frame with cells in rows, biomarker intensity expression data in columns, area, x and y coordinates, and inferred cell type in last column from "../00_Data/IntensitiesCelltypes/" called "*_intensitiesdf.csv"
+#### Output:
+Nothing, depending on settings chosen by user, scatterplots can be inspected. Can be saved byclicking "Export" in RStudio above the plot.
+
+
+
+
+
 ## 4. Data investigation & Normalisation
-data_exploration.RDONE, analyse_thresholds.RDONE, count_instances.RDONE, heatmaps, violin
+data_exploration.RDONE, analyse_thresholds.RDONE, count_instances.RDONE, heatmapsDONE, violin
 
 ### 4.1 Analysing thresholds
 The intensity thresholds that were chosen for each marker as indicators of positive marker expression vs negative marker expression (true signal vs noise) are saved as csv files in "../00_Data/Thresholds".
-
 These data frames can be summarised and cleaned up with **analyse_thresholds.R**, which can be found in 04_DataInvestigationNormalisation.
-
 #### Usage:
 Open the script in RStudio and run, either line-by-line or by using the "Source" button.
 BUT: Seeing as the purpose of this script is to summarise all threshold data frames, it requires all threshold files as input. However, only the first one is provided as example input data here, therefore, this script cannot be run this way.
-
 #### Input: 
 Thresholds data frames from "../00_Data/Thresholds"
-
 #### Output: 
 One data frame including all thresholds values for all images called filtered_thresholds_all.csv, saved in "00_Data/Thresholds"
 
@@ -194,20 +205,16 @@ One data frame including all thresholds values for all images called filtered_th
 This script, **data_exploration.R** in "04_DataInvestigationNormalisation" takes the intensities data frame as input and lets the user run a variety of functions to inspect the data, such as marker expression levels.
 In addition to that, multiple normalisation methods are available as functions.
 These can again be plotted with the plotting functions and the results can be compared.
-
 #### Usage: 
 Due to the different functionalities of this script, it is up to the user to decide which functions to run and which markers to inspect and plot.
 Therefore, this script is best run line-by-line (rather than sourcing).
 The user can also choose the image to be investigated. Here, it is already set to R1B1ROI1 because that is the example image provided in this repository.
-
 #### Required packages & versions: 
 - tidyverse: 2.0.0
 - DescTools: 0.99.54
 - ggplot2: 3.5.0
-
 #### Input: 
 An intensity data frame from "00_Data/IntensitiesCelltypes/"
-
 #### Output: 
 Depends on each function. Some output text in the console, some plots, some return data frames.
 If the script is run as-is, for example sourced, the loaded intensity data frame will be winsorized, scaled and then saved to "../00_Data/Normalised/".
@@ -215,14 +222,11 @@ If the script is run as-is, for example sourced, the loaded intensity data frame
 ### 4.3 Count cell type abundances
 This script called **count_instances.R** takes celltypes data frames with binary expression for each marker and creates one data frame with total cell type counts.
 The output data frame also shows the biomarker counts that contribute to each cell type.
-
 #### Usage: 
 Run the script either line-by-line in RStudio or source it (top right corner button in RStudio). If you want to change the input image, change the string assigned to the variable "my_img".
-
 #### Input: 
 Data frame .csv file with cells in rows, biomarker binary expression data in columns, inferred cell type in last column from "../00_Data/IntensitiesCelltypes/" called "*_celltypesdf.csv".
 The script can also be used with multiple input data frames that then get combined. To do that, change the variable "onlyOneDF" in the script to FALSE and change the paths to point to the correct input files.
-
 #### Output: 
 One csv file in the folder "00_Data/" called "*celltypeCounts.csv". The data frame also opens automatically in the script when it's created.
 
@@ -230,17 +234,13 @@ One csv file in the folder "00_Data/" called "*celltypeCounts.csv". The data fra
 The script **heatmap_celltypeintensities.R** takes intensities data frames and creates heatmaps showing intensities, organised by markers horizontally and cell types vertically.
 Given the user has already created normalised intensity data frames with data_exploration.R, they can also change the variable "norm" to TRUE and thereby use the normalised data as input instead.
 Additionally, the user can also choose to only include lymphocytes in the heatmap. This will make it easier to see the individual cells of the lymphocytes.
-
 #### Usage: 
 Run the script line-by-line in RStudio. If you want to change the input image, change the string assigned to the variable "my_img" below. If you want to use the normalised data as input, change the variable "norm" to TRUE. If you want to only plot lymphocytes in the heatmap, change plot_lymph_separate to TRUE.
-
 #### Required packages: 
 - ComplexHeatmap: 2.18.0
-
 #### Input: 
 - Raw data frame with cells in rows, biomarker intensity expression data in columns, area, x and y coordinates, and inferred cell type in last column from "../00_Data/IntensitiesCelltypes/" called "*_intensitiesdf.csv"
 - Normalised data frame with the cells in rows, biomarker intensity expression data in columns, area, x and y coordinates, and inferred cell type in last column from "../00_Data/Normalised/" called "*_norm.csv"
-
 #### Output: 
 Nothing, depending on settings chosen by user, heatmaps are shown and can be inspected. Can be saved by clicking "Export" in RStudio above the plot.
 
