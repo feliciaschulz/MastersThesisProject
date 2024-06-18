@@ -226,6 +226,23 @@ The script can also be used with multiple input data frames that then get combin
 #### Output: 
 One csv file in the folder "00_Data/" called "*celltypeCounts.csv". The data frame also opens automatically in the script when it's created.
 
+### 4.4 Heatmaps
+The script **heatmap_celltypeintensities.R** takes intensities data frames and creates heatmaps showing intensities, organised by markers horizontally and cell types vertically.
+Given the user has already created normalised intensity data frames with data_exploration.R, they can also change the variable "norm" to TRUE and thereby use the normalised data as input instead.
+Additionally, the user can also choose to only include lymphocytes in the heatmap. This will make it easier to see the individual cells of the lymphocytes.
+
+#### Usage: 
+Run the script line-by-line in RStudio. If you want to change the input image, change the string assigned to the variable "my_img" below. If you want to use the normalised data as input, change the variable "norm" to TRUE. If you want to only plot lymphocytes in the heatmap, change plot_lymph_separate to TRUE.
+
+#### Required packages: 
+- ComplexHeatmap: 2.18.0
+
+#### Input: 
+- Raw data frame with cells in rows, biomarker intensity expression data in columns, area, x and y coordinates, and inferred cell type in last column from "../00_Data/IntensitiesCelltypes/" called "*_intensitiesdf.csv"
+- Normalised data frame with the cells in rows, biomarker intensity expression data in columns, area, x and y coordinates, and inferred cell type in last column from "../00_Data/Normalised/" called "*_norm.csv"
+
+#### Output: 
+Nothing, depending on settings chosen by user, heatmaps are shown and can be inspected. Can be saved by clicking "Export" in RStudio above the plot.
 
 ## 5. Dimensionality Reduction
 
