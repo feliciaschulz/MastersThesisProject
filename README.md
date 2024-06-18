@@ -245,6 +245,31 @@ Run the script line-by-line in RStudio. If you want to change the input image, c
 Nothing, depending on settings chosen by user, heatmaps are shown and can be inspected. Can be saved by clicking "Export" in RStudio above the plot.
 
 ## 5. Dimensionality Reduction
+The script **dimensionality_reduction** in "05/DimensionalityReduction/" takes files with the inferred cell types of cells as well as their coordinates and creates dimensionality reduction plots.
+The user can choose between the dimensionality reduction methods ("t-SNE" or "UMAP").
+They can also choose which inferred cell types to include in the plots, or rather, they get four options: 
+1. Remove "mixed" cells. 
+2. Remove "other" cells. 
+3. Remove both "other" and "mixed" cells. 
+4. Only keep "mixed" cells.
+After creating the dimensionality reduction data frames, they are also plotted. 
+Here, if the user has chosen the UMAP method, they can also choose whether to plot it normally, colouring the points according to their inferred cell types, or whether to colour them according to their expression levels of a biomarker.
+#### Usage: 
+Run the script line-by-line in RStudio. 
+If you want to change the input image, change the string assigned to the variable "my_img" below. Also change desired parameters where it says "### USER ###".
+#### Required packages & versions: 
+- tidyverse: 2.0.0
+- Rtsne: 0.17
+- umap: 0.2.10.0
+- spatialEco: 2.0.2
+#### Input: 
+Raw data frame with cells in rows, biomarker intensity expression data in columns, area, x and y coordinates, and inferred cell type in last column from "../00_Data/IntensitiesCelltypes/" called "*_intensitiesdf.csv"
+#### Output: 
+Nothing, depending on settings chosen by user, dimensionality reduction plots can be inspected. 
+They can also be saved by clicking "Export" in RStudio above the plot.
+
+
+
 
 
 ## 6. Cell Visualisation Application
