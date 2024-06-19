@@ -21,6 +21,10 @@ This repository has the following structure:
 
 And finally, this README file, containing information on every single script, its usage, input and output files, and required packages.
 
+### Important Note
+We did not get permission to publish the raw images on a GitHub repository at this time, so the raw example .tif images could not be provided as example data. This means that there is no example input data for the scripts in 01_Segmentation and 02_CreateIntensityDfs. Nevertheless, the scripts can be tried with similar input data.
+For 01_Segmentation, this should be .tif images, and for 02_CreateIntensityDfs, raw .tif marker images and a cell segmentation mask that must have the same dimensions as the images.
+
 ## Abstract
 The aim of this research project was to create a bioinformatic image analysis pipeline for the investigation of lymphocytes in healthy human lungs. 
 The data consisted of three formalin-fixed paraffin-embedded (FFPE) tissue samples, divided into six regions of interest (ROIs) which were imaged using a multiplexed cyclic fluorescence-based antibody staining approach with 26 antibodies. 
@@ -179,7 +183,7 @@ Two csv files in the folder "../00_Data/IntensitiesCelltypes/"
 - ..._intensitiesdf.csv: intensity data as well as centroids, area, inferred cell type
 - ..._celltypesdf.csv: binary marker expression data as well as inferred cell type
 
-!! try out with cleared environment to see if any packages are necessary
+
 
 ### 3.2 Check inferred cell types with scatterplots
 The script called **check_celltypes.R** in"03_CellTypeInference/" takes files with the inferred cell types of cells as well as their coordinates and creates scatterplots coloured by cell types.
@@ -329,7 +333,7 @@ The displaying of the selected region can also take a little while, because iden
 When running the application, warnings might appear, they can be ignored.
 
 #### Input 
-A data frame csv file with cells in rows, biomarker intensity data in columns, two columns for x and y coordinates (X_coord, Y_coord), area of cell (area), cell phenotype (InferredCellType). The input data should be accessible from the folder "../00_Data/IntensitiesCelltypes/".
+A data frame csv file with cells in rows, biomarker intensity data in columns, two columns for x and y coordinates (X_coord, Y_coord), area of cell (area), cell phenotype (InferredCellType) called "*_intensitiesdf.csv". The input data should be accessible from the folder "../00_Data/IntensitiesCelltypes/".
 
 At the moment, the app only works for input data that has the format of the example in this repository.
 
@@ -368,27 +372,11 @@ The code was written in Python v. 3.10.12. The following packages are required f
 
 
 #### Input
-As input data, this script takes the intensity data frames created in 2. that are saved in 00_Data/IntensitiesCelltypes. They should be csv files.
+As input data, this script takes the intensity data frames created in 2. that are saved in 00_Data/IntensitiesCelltypes. They should be csv files called "*_intensitiesdf.csv".
 
 #### Output
 The script creates data frames and plots, none of which are automatically saved, because there are many different user-specific options. 
 The plots are created in the notebook and are displayed there as well.
 Instructions as to how to save the plots if desired can be found in the notebook itself.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
