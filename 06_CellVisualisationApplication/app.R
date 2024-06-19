@@ -58,7 +58,8 @@ set.seed(20) # Make sure the umap result is always the same
 
 #### Load in data
 my_img = "R1B1ROI1"
-intensities = read.csv(paste0("../Old00_Data/IntensitiesCelltypes/", my_img, "_intensitiesdf.csv"))
+intensities = read.csv(paste0("../00_Data/IntensitiesCelltypes/", my_img, "_intensitiesdf.csv"))
+intensities$X = NULL
 geo = intensities 
 geo$colour = "nohover"
 
