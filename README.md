@@ -19,27 +19,28 @@ This repository has the following structure:
 6. CellVisualisationApplication - containing code for an app with which one can further analyse dimensionality reduction plots and make sense of the results
 7. 07_DistanceAnalysis - containing a script for measuring distances between cell types and creating different kinds of plots to visualise them
 
-And finally, this README file, containing information on every single script, its usage, input and output files, and required packages.
+And finally, this README file, containing information on every single script, its usage, input and output files, and required packages (if there are any non-standard packages required for the script).
 
-### Important Note
+### Important Note - Data Availability
 We did not get permission to publish the raw images on a GitHub repository at this time, so the raw example .tif images could not be provided as example data. This means that there is no example input data for the scripts in 01_Segmentation and 02_CreateIntensityDfs. Nevertheless, the scripts can be tried with similar input data.
 For 01_Segmentation, this should be .tif images, and for 02_CreateIntensityDfs, raw .tif marker images and a cell segmentation mask that must have the same dimensions as the images.
 
+Example input data from one image, R1B1ROI1, is provided. This input data can be used on all other input plots apart from 4.1 Analysing Thresholds. This is because here, the purpose is to summarise thresholds values from different images, which is not possible with only one input image.
+
 ## Abstract
 The aim of this research project was to create a bioinformatic image analysis pipeline for the investigation of lymphocytes in healthy human lungs. 
+The lung is an important organ to study as it provides a fast way for pathogens to enter the body. 
+Therefore, the pulmonary immune system must be further investigated in both healthy and diseased tissue.
+In order to do comparative studies, we need to carefully characterise healthy tissue, which was done in this study using multiplexed image analysis.
 The data consisted of three formalin-fixed paraffin-embedded (FFPE) tissue samples, divided into six regions of interest (ROIs) which were imaged using a multiplexed cyclic fluorescence-based antibody staining approach with 26 antibodies. 
-
 State-of-the-art downstream analysis methods and tools were applied to stitch the images, segment the cells, perform dimensionality reduction, and investigate the geographical properties of the data.
-
 A manual gating approach was used to infer cell types based on marker intensity expression levels and binary thresholds.
-The cell type inference was tested using multiple statistical plotting methods and proved to be overall successful.
+The cell type inference was tested using multiple statistical plotting methods.
 A cell visualisation app was created to provide an interface for further analysing dimensionality reduction plots, with which cell type misclassifications could be examined and explained.
-
-The locations of T-cells in the tissues were investigated using distance analysis methods and no particular trends were found regarding which structural regions of the tissue the cells were located in.
-
+The locations of T cells in the tissues were investigated using distance analysis methods and no particular trends were found regarding which structural regions of the tissue the cells were located in.
 Regardless, this methodology was a successful approach to analysing multiplexed imaging data.
 In the future, it can be applied to further classifying lymphocytes in healthy lungs, for example to distinguish circulating cells from tissue-resident memory cells.
-It can also be used to further investigate diseased tissue.
+This workflow can also be used to do future comparative studies of patient samples.
 
 
 ## 1. Segmentation
@@ -102,7 +103,7 @@ Pachitariu, M., & Stringer, C. (2022). Cellpose 2.0: how to train your own model
 Find the Cellpose GitHub repository here: https://github.com/MouseLand/cellpose
 #### Usage
 An environment file can also be found in 01_Segmentation to facilitate usage.
-This is how you can use the cellpose_env.yml file to create the conda environment, and have Jupyter Notebook run on the specific environment:
+This is how you can use the cellpose_env.yml file to create the conda environment:
 
 ```bash
 # You should be in the folder 01_Segmentation
@@ -125,7 +126,7 @@ The GUI has a variety of output options. Most importantly, you can save a .tif s
 
 
 ## 2. Create intensity data frames
-In this script, raw (stitched) images and their respective segmentation masks are loaded. The script reads the images into the notebook and their dimensions are checked. 
+In the script **GetIntensityDataframes.ipynb**, raw (stitched) images and their respective segmentation masks are loaded. The script reads the images into the notebook and their dimensions are checked. 
 If the dimensions are correct, the images are measured and their data is saved to data frames. The intensity values for each cell (min, mean, max) are saved, as well as cell area (in pixels) and their centroids. 
 
 If the dimensions of the images and the mask are not identical, the cells cannot be measured. 
@@ -135,19 +136,11 @@ If the dimensions are not the same for any other reason, the padding code in thi
 
 After creating the data frames, they are saved to the data folder.
 #### Usage
-If you don't have jupyter notebook yet, install it in the terminal like this:
-```bash
-pip install jupyter notebook
-```
-To run the notebook, run this command in the directory in which you have the scripts (or any earlier directory):
-```bash
-jupyter notebook
-```
-Jupyter notebook will be opened in your browser. You can navigate to your script file and open it.
-
+If you don't have jupyter notebook yet, see section 1 of this README.
 This notebook can be run as-is, cell-by-cell. 
+
 #### Required packages
-The code was written in Python v. 3.10.12. The following packages are required for and automatically loaded in the notebook:
+The code was written in Python v. 3.10.12. The following packages are required for the notebook:
 - scikit-image: 0.22.0
 - numpy: 1.26.4
 - pandas: 2.2.0
@@ -160,8 +153,6 @@ In this script, the correct name of the image available as example data is alrea
 #### Output
 This script saves one data frame for each biomarker-stained input image to "00_Data/IntensityDataFrames/<img name>" as csv files.
 Make sure to have created the output folder already before saving the images.
-
-
 
 
 
@@ -186,7 +177,7 @@ Two csv files in the folder "../00_Data/IntensitiesCelltypes/"
 
 
 ### 3.2 Check inferred cell types with scatterplots
-The script called **check_celltypes.R** in"03_CellTypeInference/" takes files with the inferred cell types of cells as well as their coordinates and creates scatterplots coloured by cell types.
+The script called **check_celltypes.R** in "03_CellTypeInference/" takes files with the inferred cell types of cells as well as their coordinates and creates scatterplots coloured by cell types.
 The user can either choose to only create a plot for one image by having the  variable "onlyOneDF" == TRUE, or to create a grid of multiple plots for multiple images. For just one image, the image name must be changed in "img_name", and for multiple images, all paths and filenames need to be checked.
 The plot axes are in micrometres.
 #### Usage: 
@@ -196,8 +187,14 @@ If you want to change the input image, change the string assigned to the variabl
 - ggplot2: 3.5.0
 - dplyr: 1.1.4
 - patchwork: 1.2.0
+
+Check your package versions in the R console with 
+```R
+packageVersion("<package name>")
+```
+
 #### Input: 
-- Raw data frame with cells in rows, biomarker intensity expression data in columns, area, x and y coordinates, and inferred cell type in last column from "../00_Data/IntensitiesCelltypes/" called "*_intensitiesdf.csv"
+Raw data frame with cells in rows, biomarker intensity expression data in columns, area, x and y coordinates, and inferred cell type in last column from "../00_Data/IntensitiesCelltypes/" called "*_intensitiesdf.csv"
 #### Output:
 Nothing, depending on settings chosen by user, scatterplots can be inspected. Can be saved byclicking "Export" in RStudio above the plot.
 
@@ -206,16 +203,15 @@ Nothing, depending on settings chosen by user, scatterplots can be inspected. Ca
 
 
 ## 4. Data investigation & Normalisation
-data_exploration.RDONE, analyse_thresholds.RDONE, count_instances.RDONE, heatmapsDONE, violin
 
 ### 4.1 Analysing thresholds
 The intensity thresholds that were chosen for each marker as indicators of positive marker expression vs negative marker expression (true signal vs noise) are saved as csv files in "../00_Data/Thresholds".
 These data frames can be summarised and cleaned up with **analyse_thresholds.R**, which can be found in 04_DataInvestigationNormalisation.
 #### Usage:
 Open the script in RStudio and run, either line-by-line or by using the "Source" button.
-BUT: Seeing as the purpose of this script is to summarise all threshold data frames, it requires all threshold files as input. However, only the first one is provided as example input data here, therefore, this script cannot be run this way.
+BUT: Seeing as the purpose of this script is to summarise all threshold data frames, it requires all threshold files as input. However, only the first one is provided as example input data here, therefore, this script cannot be run this way. Nevertheless, an example of the output file is in the folder "../00_Data/Thresholds".
 #### Input: 
-Thresholds data frames from "../00_Data/Thresholds"
+Thresholds data frames from "../00_Data/Thresholds" called "*_Thresholds.csv"
 #### Output: 
 One data frame including all thresholds values for all images called filtered_thresholds_all.csv, saved in "00_Data/Thresholds"
 
@@ -232,7 +228,7 @@ The user can also choose the image to be investigated. Here, it is already set t
 - DescTools: 0.99.54
 - ggplot2: 3.5.0
 #### Input: 
-An intensity data frame from "00_Data/IntensitiesCelltypes/"
+An intensity data frame from "00_Data/IntensitiesCelltypes/" called "*_intensitiesdf.csv"
 #### Output: 
 Depends on each function. Some output text in the console, some plots, some return data frames.
 If the script is run as-is, for example sourced, the loaded intensity data frame will be winsorized, scaled and then saved to "../00_Data/Normalised/".
@@ -270,6 +266,7 @@ They can also choose which inferred cell types to include in the plots, or rathe
 2. Remove "other" cells. 
 3. Remove both "other" and "mixed" cells. 
 4. Only keep "mixed" cells.
+
 After creating the dimensionality reduction data frames, they are also plotted. 
 Here, if the user has chosen the UMAP method, they can also choose whether to plot it normally, colouring the points according to their inferred cell types, or whether to colour them according to their expression levels of a biomarker.
 #### Usage: 
@@ -316,11 +313,6 @@ The app uses the following packages and versions:
 - umap: 0.2.10.0
 - dplyr: 1.1.4
 
-Check your package versions in the R console with 
-```R
-packageVersion("<package name>")
-```
-
 
 #### Known bugs / weaknesses
 This application can have long loading times. Depending on the size of the subset selected for the umap, the plot creation can take up to a few minutes. This is solely because the umap() function is computationally complex. 
@@ -330,7 +322,7 @@ Hover slowly. Due to the live computations, there will be a slight delay.
 When selecting a region, after drawing the circle around the chosen cells, leave the cursor in place and don't keep hovering. Otherwise, the application will detect your movement as hovering again and the selected region will disappear. 
 The displaying of the selected region can also take a little while, because identifying the cells and referring to the original data frame with coordinates is computationally complex as well.
 
-When running the application, warnings might appear, they can be ignored.
+When running the application, warnings might appear, they can be ignored as they don't affect the app's functionality.
 
 #### Input 
 A data frame csv file with cells in rows, biomarker intensity data in columns, two columns for x and y coordinates (X_coord, Y_coord), area of cell (area), cell phenotype (InferredCellType) called "*_intensitiesdf.csv". The input data should be accessible from the folder "../00_Data/IntensitiesCelltypes/".
@@ -347,16 +339,7 @@ When running the app as specified in "Usage", it will automatically open in brow
 With the script 07_DistanceAnalysis/DistanceMatrix.ipynb, distance violin plots can be made as well as neighbour sankey diagrams.
 
 #### Usage
-If you don't have jupyter notebook yet, install it in the terminal like this:
-```bash
-pip install jupyter notebook
-```
-To run the notebook, run this command in the directory in which you have the scripts (or any earlier directory):
-```bash
-jupyter notebook
-```
-Jupyter notebook will be opened in your browser. You can navigate to your script file and open it.
-
+If you don't have jupyter notebook yet, please see section 1. of this README. 
 This notebook can be run as-is, cell-by-cell. 
 Small user modifications can be made in the notebook itself if desired. These options are indicated by "### USER-INPUT ###". More about this in the notebook itself.
 
