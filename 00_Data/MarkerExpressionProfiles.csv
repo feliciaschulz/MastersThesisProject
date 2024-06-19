@@ -1,0 +1,28 @@
+;cytokeratin;cd3;cd4;cd45ro;cd45;podoplanin;fibulin2;lyve1;collageni;actin;cd38;cd138
+Epithelial cells;1;0;0;0;0;0;0;0;0;0;0;0
+Epithelial cells;1;0;0;0;0;0;0;0;0;0;0;1
+Myocytes;0;0;0;0;0;0;0;0;0;1;0;0
+Extracellular matrix;0;0;0;0;0;0;0;0;1;0;0;0
+Extracellular matrix;0;0;0;0;0;0;1;0;0;0;0;0
+Extracellular matrix;0;0;0;0;0;0;1;0;1;0;0;0
+T-cells CD4+ (helper);0;1;1;0;1;0;0;0;0;0;0;0
+T-cells Naive;0;1;0;0;1;0;0;0;0;0;0;0
+T-cells Memory;0;1;0;1;1;0;0;0;0;0;0;0
+T-cells Mixed;0;1;0;0;0;0;0;0;0;0;0;0
+T-cells Mixed;0;0;1;0;0;0;0;0;0;0;0;0
+T-cells Mixed;0;0;0;1;0;0;0;0;0;0;0;0
+T-cells Mixed;0;0;0;0;1;0;0;0;0;0;0;0
+T-cells Mixed;0;1;1;0;0;0;0;0;0;0;0;0
+T-cells Mixed;0;1;0;1;0;0;0;0;0;0;0;0
+T-cells Mixed;0;1;0;1;0;0;0;0;0;0;0;0
+T-cells Mixed;0;0;1;1;0;0;0;0;0;0;0;0
+T-cells Mixed;0;0;1;0;1;0;0;0;0;0;0;0
+T-cells Mixed;0;0;0;1;1;0;0;0;0;0;0;0
+T-cells Mixed;0;1;1;1;0;0;0;0;0;0;0;0
+T-cells Mixed;0;0;1;1;1;0;0;0;0;0;0;0
+T-cells Mixed;0;1;1;1;1;0;0;0;0;0;0;0
+Lymphatic vessel;0;0;0;0;0;0;0;1;0;0;0;0
+Lymphatic vessel;0;0;0;0;0;1;0;0;0;0;0;0
+Lymphatic vessel;0;0;0;0;0;1;0;1;0;0;0;0
+B-cells Plasma;0;0;0;0;0;0;0;0;0;0;1;1
+Other;0;0;0;0;0;0;0;0;0;0;0;0
