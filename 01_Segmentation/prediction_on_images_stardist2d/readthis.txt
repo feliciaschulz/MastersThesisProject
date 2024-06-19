@@ -1,0 +1,5 @@
+This folder prediction_on_images_stardist2d does not have example images because we do not have permission yet to share them. 
+
+The folder was added anyway, empty, to show the repository structure required to run the stardist notebook.
+
+If it is tried with other input data, it should be in this folder.
