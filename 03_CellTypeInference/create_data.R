@@ -175,7 +175,6 @@ datalist <- create_data(markers = c("actin", "cd3", "cd4",
 intensities <- datalist[[1]]
 celltypes <- datalist[[2]]
 
-r1d1roi2_ct = celltypes
 
 
 # Save to folder
